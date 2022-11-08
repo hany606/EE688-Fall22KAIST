@@ -1,8 +1,7 @@
 % EE688: Optimal Control Theory
 % Fall 2022, KAIST
 % Author: Hany Hamed
-% Assignment 3
-% Problem2: Tube-based MPC
+% Tube-based MPC
 
 clc;
 clear all;
@@ -28,7 +27,7 @@ U_poly = Polyhedron('lb', -1, 'ub', 1);
 
 
 figure(1);
-grid on; hold on;
+hold("on");
 plot(X_poly,'color','r');
 plot(U_poly,'color','b');
 legend("", "X constraints", "U constraints");
@@ -48,7 +47,7 @@ for i=1:100
 end
 
 figure(2);
-grid on; hold on;
+hold("on");
 plot(S_hat_infty, 'color', 'm');
 plot(W_poly, 'color', 'k');
 legend("$\hat{S}_\infty$", "W constraints",'Interpreter','latex');
@@ -61,7 +60,7 @@ X_bar_poly = X_poly.minus(S_hat_infty);
 U_bar_poly = U_poly.minus(K*S_hat_infty);
 
 figure(3);
-grid on; hold on;
+hold("on");
 plot(X_bar_poly, 'color', 'r');
 plot(U_bar_poly, 'color', 'b');
 legend("","$\bar{X}$", "$\bar{U}$",'Interpreter','latex');
@@ -89,7 +88,7 @@ U_poly = Polyhedron('lb', -1, 'ub', 1);
 
 
 figure(1);
-grid on; hold on;
+hold("on");
 plot(X_poly,'color','r');
 plot(U_poly,'color','b');
 legend("X constraints", "U constraints");
@@ -107,7 +106,7 @@ for i=1:100
 end
 
 figure(2);
-grid on; hold on;
+hold("on");
 plot(S_hat_infty, 'color', 'm');
 plot(W_poly, 'color', 'k');
 legend("$\hat{S}_\infty$", "W constraints",'Interpreter','latex');
@@ -120,7 +119,7 @@ X_bar_poly = X_poly.minus(S_hat_infty);
 U_bar_poly = U_poly.minus(K*S_hat_infty);
 
 figure(3);
-grid on; hold on;
+hold("on");
 plot(X_bar_poly, 'color', 'r');
 plot(U_bar_poly, 'color', 'b');
 legend("$\bar{X}$", "$\bar{U}$",'Interpreter','latex');
@@ -139,7 +138,7 @@ end
 
 
 figure(4);
-grid on; hold on;
+hold("on");
 plot(S_hat_infty, 'color', 'm');
 plot(W_poly, 'color', 'k');
 legend("$\hat{S}_3$", "W constraints",'Interpreter','latex');
@@ -151,7 +150,7 @@ X_bar_poly = X_poly.minus(S_hat_N);
 U_bar_poly = U_poly.minus(K*S_hat_N);
 
 figure(5);
-grid on; hold on;
+hold("on");
 plot(X_bar_poly, 'color', 'r');
 plot(U_bar_poly, 'color', 'b');
 legend("$\bar{X}$", "$\bar{U}$",'Interpreter','latex');
@@ -188,10 +187,12 @@ x_oinf = zeros(size(x0,1), simulation_time+1);
 ustar_seq = zeros(1, simulation_time);
 x_oinf(:,1) = x0;
 figure(6);
-grid on; hold on;
+hold("on");
 xlabel('x_1');
 ylabel('x_2'); 
 title("Nominal system (MPC)",'Interpreter','latex')
+plot(X_bar_poly, 'color', 'm');
+plot(X_poly, 'color', 'r');
 for k=1:simulation_time
     w = zeros(2,1, N_predicition_horizon);
     % Solve the finite horizon optimal control problem
@@ -213,7 +214,7 @@ for k=1:simulation_time
     ustar_seq(k) = ustar(1);
     x_oinf(:,k+1) = A*x_oinf(:,k) + B*ustar(1);
     
-    figure(6)
+
     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
     tube_plt = Extra.reduce_poly(S_hat_N + x_oinf(:,k));
     fill(tube_plt.V(:, 1), tube_plt.V(:, 2),  'r', 'FaceAlpha', 0.3);
@@ -222,24 +223,21 @@ end
 legend("Nominal trajectory", "Tube");%,'Interpreter','latex');
 
 
-%% (d) using the nominal trajectory from (c)
+%% (d)
 simulation_time = 20;
+N_predicition_horizon = 19;
 x_oinf1 = zeros(size(x0,1), simulation_time+1);
 tube_size = zeros(2, simulation_time);
 x_oinf1(:,1) = x0;
 figure(7);
-grid on; hold on;
+hold("on");
 xlabel('x_1');
 ylabel('x_2'); 
-title("Tube-based MPC",'Interpreter','latex')
+title("Tube-MPC",'Interpreter','latex')
 for k=1:simulation_time
-    % Tube-based MPC using the nominal trajectory used from (c)
-    % TODO: Should we recalclate ustar_seq(k) based on the new x or from the
-    % nominal trajcetory (No)
     ustar_new = ustar_seq(k) + K*(x_oinf1(:,k) - x_oinf(:,k));
     x_oinf1(:,k+1) = A*x_oinf1(:,k) + B*ustar_new(1) + unifrnd(-0.1, 0.1, 2,1,1);
-    figure(7)
-
+    
     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '--o', 'LineWidth', 2, 'Color', 'g')
     plot(x_oinf1(1,1:k+1), x_oinf1(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
     tube_vol = S_hat_N.volume;
@@ -251,7 +249,6 @@ for k=1:simulation_time
 end
 legend("Nominal trajectory", "Trajectory Tracking using Linear Feedback control", "Tube");%,'Interpreter','latex');
 
-% N_predicition_horizon = 19;
 % Question: TODO: When I make the system tracking using MPC, We need to
 % reformulate the cost function to work on minimizing the error dynamics
 % with the system constraints.
@@ -289,10 +286,10 @@ legend("Nominal trajectory", "Trajectory Tracking using Linear Feedback control"
 % end
 
 
-%% (e)
+%% (d)
 % Question: TODO: What does it mean and the tube size?
 figure(8);
-grid on; hold on;
+hold("on");
 plot(x_oinf1(1:k+1)-x_oinf(1:k+1), 'Color', 'b');
 plot(tube_size(1, 1:k), '-o', 'Color', 'g');
 plot(tube_size(2, 1:k), '-o', 'Color', 'g');
