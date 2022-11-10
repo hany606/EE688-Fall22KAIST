@@ -22,7 +22,7 @@ bc = [0.4;0.4];
 C_poly = Polyhedron(Ac, bc);
 
 
-%% (a)
+% (a)
 
 % The set C is control invariant if it is subset of Pre(C)
 
@@ -36,12 +36,19 @@ bu = U_poly.b;
 Pre_CU = Polyhedron('A', [A_om * A, A_om * B ; zeros(2,2), Au], 'b', [b_om; bu]);
 Pre_C = Pre_CU.projection([1 2]);
 
+% One-step BRS of X
+H_pre = Pre_X.H(:,1:2);
+K_pre = Pre_X.H(:,3);
+
+BRS_X = Polyhedron([H_pre; H_X], [K_pre; K_X]);
+
 
 figure(1);
 grid on; hold on;
+plot(C_poly, 'color', [0.7 0.7 0.7]);
+plot(Pre_C, 'color', 'r');
 plot(Pre_C, 'color', 'm');
-plot(set_poly, 'color', 'r');
-legend("Pre(C)", "", "", "", "C");
+legend("C", "", "", "", "Pre(CU)", "", "", "", "Pre(C)");
 
 
 %% (b) N-step backward reachable set K_N(X_f=C)
@@ -58,10 +65,11 @@ plot([-xmax xmax xmax -xmax -xmax], [-xmax -xmax xmax xmax -xmax], 'k', 'LineWid
 % set_poly = X_poly;
 set_poly = C_poly;
 Omega = set_poly;
-A_om = set_poly.A; 
-b_om = set_poly.b;
+A_om = Omega.A; 
+b_om = Omega.b;
 Au = U_poly.A;
 bu = U_poly.b;
+
 
 for i=1:100
     % Precursor of Xf=C
@@ -74,8 +82,9 @@ for i=1:100
     Omega_next = Polyhedron('A', [A_pre; A_om], 'b', [b_pre; b_om]);
     
     if Omega_next == Omega
+        Omega = Pre_X;
+        disp('converged at')
         disp(i)
-        disp('converged')
         break
     end
     
@@ -89,8 +98,12 @@ Nbar = i;
 % Cinf supposdly to be the X_0 feasible region
 Cinf = Omega;
 % TODO: Something is wrong!!!!
-plot(C_poly, 'color', 'r')
-plot(Cinf, 'color', 'm')
+plot(Cinf, 'color', 'm');
+plot(set_poly, 'color', 'r');
+% plot(C_poly, 'color', 'r')
+% plot(Cinf, 'color', 'm')
+
+
 
 % 
 % 

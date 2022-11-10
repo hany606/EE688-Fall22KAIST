@@ -12,10 +12,6 @@ close all;
 % Determine tightened state and input constraint sets X¯ and U¯ s
 % Nominal system xk+1 = ¯xk + ¯uk satisfies the tightened
 
-clc;
-clear all;
-close all;
-
 A = 1; B=1;
 K = -0.5;
 
@@ -27,7 +23,7 @@ X_poly = Polyhedron('ub',2);
 U_poly = Polyhedron('lb', -1, 'ub', 1);
 
 
-figure(1);
+figure('Name', "(a)");
 grid on; hold on;
 plot(X_poly,'color','r');
 plot(U_poly,'color','b');
@@ -42,12 +38,19 @@ title("Constraints")
 W_poly = Polyhedron('lb', -0.1, 'ub', 0.1);
 
 S_hat_infty = W_poly;
+S_hat_next = S_hat_infty;
+% TODO: Make infinity by the convergence of the S_hat
 for i=1:100
-    % It is possible to directly use + and -
     S_hat_infty = S_hat_infty.plus(((A+B*K)^i)*W_poly);
+    if(S_hat_next == S_hat_infty)
+        disp("Converge at");
+        disp(i);
+        break
+    end
+    S_hat_next = S_hat_infty;
 end
 
-figure(2);
+figure('Name', "(a)");
 grid on; hold on;
 plot(S_hat_infty, 'color', 'm');
 plot(W_poly, 'color', 'k');
@@ -60,7 +63,7 @@ X_bar_poly = X_poly.minus(S_hat_infty);
 % TODO: Is it correct that U_bar did not change?
 U_bar_poly = U_poly.minus(K*S_hat_infty);
 
-figure(3);
+figure('Name', "(a)");
 grid on; hold on;
 plot(X_bar_poly, 'color', 'r');
 plot(U_bar_poly, 'color', 'b');
@@ -73,9 +76,9 @@ title("Tightened constraints")
 % Determine tightened state and input constraint sets X¯ and U¯ s
 % Nominal system xk+1 = ¯xk + ¯uk satisfies the tightened
 
-clc;
-clear all;
-close all;
+% clc;
+% clear all;
+% close all;
 
 A = [1, 1; 0, 1]; B=[0;1];
 K = [-0.4, -1.2];
@@ -88,7 +91,7 @@ X_poly = Polyhedron('lb', [-10;-10], 'ub', [10;10]);
 U_poly = Polyhedron('lb', -1, 'ub', 1);
 
 
-figure(1);
+figure('Name', "(b)");
 grid on; hold on;
 plot(X_poly,'color','r');
 plot(U_poly,'color','b');
@@ -102,11 +105,18 @@ title("Constraints")
 W_poly = Polyhedron('lb', [-0.1; -0.1], 'ub', [0.1; 0.1]);
 
 S_hat_infty = W_poly;
+S_hat_next = S_hat_infty;
 for i=1:100
     S_hat_infty = S_hat_infty.plus(((A+B*K)^i)*W_poly);
+    if(S_hat_next == S_hat_infty)
+        disp("Converge at");
+        disp(i);
+        break
+    end
+    S_hat_next = S_hat_infty;
 end
 
-figure(2);
+figure('Name', "(b)");
 grid on; hold on;
 plot(S_hat_infty, 'color', 'm');
 plot(W_poly, 'color', 'k');
@@ -119,7 +129,7 @@ title("Debug")
 X_bar_poly = X_poly.minus(S_hat_infty);
 U_bar_poly = U_poly.minus(K*S_hat_infty);
 
-figure(3);
+figure('Name', "(b)");
 grid on; hold on;
 plot(X_bar_poly, 'color', 'r');
 plot(U_bar_poly, 'color', 'b');
@@ -138,7 +148,7 @@ for i=1:N
 end
 
 
-figure(4);
+figure('Name', "(b)");
 grid on; hold on;
 plot(S_hat_infty, 'color', 'm');
 plot(W_poly, 'color', 'k');
@@ -150,7 +160,7 @@ title("Debug")
 X_bar_poly = X_poly.minus(S_hat_N);
 U_bar_poly = U_poly.minus(K*S_hat_N);
 
-figure(5);
+figure('Name', "(b)");
 grid on; hold on;
 plot(X_bar_poly, 'color', 'r');
 plot(U_bar_poly, 'color', 'b');
@@ -164,7 +174,7 @@ title("Tightened constraints using $\hat{S}_3$",'Interpreter','latex')
 % Question: TODO: what is the initial condition
 % Question: TODO: Is there any terminal constrain I should care about?
 
-close all;
+% close all;
 
 % Nominal system
 % MPC for the system
@@ -187,7 +197,7 @@ simulation_time = 20;
 x_oinf = zeros(size(x0,1), simulation_time+1);
 ustar_seq = zeros(1, simulation_time);
 x_oinf(:,1) = x0;
-figure(6);
+figure(9);
 grid on; hold on;
 xlabel('x_1');
 ylabel('x_2'); 
@@ -213,7 +223,7 @@ for k=1:simulation_time
     ustar_seq(k) = ustar(1);
     x_oinf(:,k+1) = A*x_oinf(:,k) + B*ustar(1);
     
-    figure(6)
+    figure(9)
     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
     tube_plt = Extra.reduce_poly(S_hat_N + x_oinf(:,k));
     fill(tube_plt.V(:, 1), tube_plt.V(:, 2),  'r', 'FaceAlpha', 0.3);
@@ -225,9 +235,10 @@ legend("Nominal trajectory", "Tube");%,'Interpreter','latex');
 %% (d) using the nominal trajectory from (c)
 simulation_time = 20;
 x_oinf1 = zeros(size(x0,1), simulation_time+1);
+errors = zeros(size(x0, 1), simulation_time+1);
 tube_size = zeros(2, simulation_time);
 x_oinf1(:,1) = x0;
-figure(7);
+figure(10);
 grid on; hold on;
 xlabel('x_1');
 ylabel('x_2'); 
@@ -238,7 +249,8 @@ for k=1:simulation_time
     % nominal trajcetory (No)
     ustar_new = ustar_seq(k) + K*(x_oinf1(:,k) - x_oinf(:,k));
     x_oinf1(:,k+1) = A*x_oinf1(:,k) + B*ustar_new(1) + unifrnd(-0.1, 0.1, 2,1,1);
-    figure(7)
+    errors(:, k+1) = x_oinf1(:,k+1) - x_oinf(:,k+1);
+    figure(10)
 
     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '--o', 'LineWidth', 2, 'Color', 'g')
     plot(x_oinf1(1,1:k+1), x_oinf1(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
@@ -248,6 +260,10 @@ for k=1:simulation_time
 
     tube_plt = Extra.reduce_poly(S_hat_N + x_oinf(:,k));
     fill(tube_plt.V(:, 1), tube_plt.V(:, 2),  'r', 'FaceAlpha', 0.3);
+
+
+%     tube_plt = Extra.reduce_poly(S_hat_infty + x_oinf(:,k));
+%     fill(tube_plt.V(:, 1), tube_plt.V(:, 2),  'm', 'FaceAlpha', 0.3);
 end
 legend("Nominal trajectory", "Trajectory Tracking using Linear Feedback control", "Tube");%,'Interpreter','latex');
 
@@ -290,48 +306,22 @@ legend("Nominal trajectory", "Trajectory Tracking using Linear Feedback control"
 
 
 %% (e)
-% Question: TODO: What does it mean and the tube size?
-figure(8);
+% close all;
+figure('Name', "(e)");
 grid on; hold on;
-plot(x_oinf1(1:k+1)-x_oinf(1:k+1), 'Color', 'b');
-plot(tube_size(1, 1:k), '-o', 'Color', 'g');
-plot(tube_size(2, 1:k), '-o', 'Color', 'g');
-plot(-tube_size(1, 1:k)+tube_size(2, 1:k));
-plot(tube_size(1, 1:k)-tube_size(2, 1:k));
+% The plot of the polytope is with grey in order to show better the vectors
+plot(S_hat_N, 'color', [0.7,0.7,0.7]);
+scatter(errors(1,:), errors(2,:), 'color', 'b');
+plotv(errors,'-o');
+xlabel('x_1');
+ylabel('x_2'); 
+title("$\hat{S}_3$ plot with errors",'Interpreter','latex')
 
 
-% S_list =[];
-% S_hat_inf = W_poly;
-% for i=1:100
-%     S_hat_inf = S_hat_inf.plus(((A+B*K)^i)*W_poly);
-%     S_list = [S_list S_hat_inf]
-% end
-% 
-% % Plot the tube size
-% figure(3)
-% plot(S_list(1),'color',[0.7 0.7 0.7]);
-% axis([-2 2 -2 2])
-% xlabel('w_1');
-% ylabel('w_2'); 
-% set(gca, 'fontsize', 12)
-% 
-% figure(4)
-% plot(S_list(3),'color',[0.7 0.7 0.7]);
-% axis([-2 2 -2 2])
-% xlabel('w_1');
-% ylabel('w_2'); 
-% set(gca, 'fontsize', 12)
-% 
-% figure(5)
-% plot(S_list(5),'color',[0.7 0.7 0.7]);
-% axis([-2 2 -2 2])
-% xlabel('w_1');
-% ylabel('w_2'); 
-% set(gca, 'fontsize', 12)
-% 
-% figure(6)
-% plot(S_list(90),'color',[0.7 0.7 0.7]);
-% axis([-2 2 -2 2])
-% xlabel('w_1');
-% ylabel('w_2'); 
-% set(gca, 'fontsize', 12)
+% figure(9);
+% grid on; hold on;
+% % The plot of the polytope is with grey in order to show better the vectors
+% scatter(errors(1,:), errors(2,:), 'color', 'b');
+% xlabel('simulation times');
+% ylabel('x_2'); 
+% title("Errors",'Interpreter','latex')
