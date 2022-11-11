@@ -39,7 +39,6 @@ W_poly = Polyhedron('lb', -0.1, 'ub', 0.1);
 
 S_hat_infty = W_poly;
 S_hat_next = S_hat_infty;
-% TODO: Make infinity by the convergence of the S_hat
 for i=1:100
     S_hat_infty = S_hat_infty.plus(((A+B*K)^i)*W_poly);
     if(S_hat_next == S_hat_infty)
@@ -60,7 +59,6 @@ ylabel('x_2');
 title("Debug")
 
 X_bar_poly = X_poly.minus(S_hat_infty);
-% TODO: Is it correct that U_bar did not change?
 U_bar_poly = U_poly.minus(K*S_hat_infty);
 
 figure('Name', "(a)");
@@ -138,11 +136,9 @@ xlabel('x_1');
 ylabel('x_2'); 
 title("Tightened constraints using $\hat{S}_\infty$",'Interpreter','latex')
 
-% Question: What is meant with that : mpt3 toolbox to construct a tube S^_N; N=3 ????????????????????? TODO
-
 
 S_hat_N = W_poly;
-N = 3;
+N = 2; % As S_hat_N = W_poly already N=1, therefore the left terms is i=1,2
 for i=1:N
     S_hat_N = S_hat_N.plus(((A+B*K)^i)*W_poly);
 end
@@ -171,9 +167,6 @@ title("Tightened constraints using $\hat{S}_3$",'Interpreter','latex')
 
 
 %% (c)
-% Question: TODO: what is the initial condition
-% Question: TODO: Is there any terminal constrain I should care about?
-
 % close all;
 
 % Nominal system
@@ -236,7 +229,6 @@ legend("Nominal trajectory", "Tube");%,'Interpreter','latex');
 simulation_time = 20;
 x_oinf1 = zeros(size(x0,1), simulation_time+1);
 errors = zeros(size(x0, 1), simulation_time+1);
-tube_size = zeros(2, simulation_time);
 x_oinf1(:,1) = x0;
 figure(10);
 grid on; hold on;
@@ -245,7 +237,6 @@ ylabel('x_2');
 title("Tube-based MPC",'Interpreter','latex')
 for k=1:simulation_time
     % Tube-based MPC using the nominal trajectory used from (c)
-    % TODO: Should we recalclate ustar_seq(k) based on the new x or from the
     % nominal trajcetory (No)
     ustar_new = ustar_seq(k) + K*(x_oinf1(:,k) - x_oinf(:,k));
     x_oinf1(:,k+1) = A*x_oinf1(:,k) + B*ustar_new(1) + unifrnd(-0.1, 0.1, 2,1,1);
@@ -254,55 +245,12 @@ for k=1:simulation_time
 
     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '--o', 'LineWidth', 2, 'Color', 'g')
     plot(x_oinf1(1,1:k+1), x_oinf1(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
-    tube_vol = S_hat_N.volume;
-    tube_size(1,k) = -tube_vol/2;
-    tube_size(2,k) = tube_vol/2;
 
     tube_plt = Extra.reduce_poly(S_hat_N + x_oinf(:,k));
     fill(tube_plt.V(:, 1), tube_plt.V(:, 2),  'r', 'FaceAlpha', 0.3);
 
-
-%     tube_plt = Extra.reduce_poly(S_hat_infty + x_oinf(:,k));
-%     fill(tube_plt.V(:, 1), tube_plt.V(:, 2),  'm', 'FaceAlpha', 0.3);
 end
 legend("Nominal trajectory", "Trajectory Tracking using Linear Feedback control", "Tube");%,'Interpreter','latex');
-
-% N_predicition_horizon = 19;
-% Question: TODO: When I make the system tracking using MPC, We need to
-% reformulate the cost function to work on minimizing the error dynamics
-% with the system constraints.
-% should I sample the random uncertainity again inside MPC
-% and when evolve the system??
-
-% for k=1:simulation_time
-%     w = unifrnd(-0.1, 0.1, 2,1,N_predicition_horizon);
-%     % Solve the finite horizon optimal control problem
-%     if k == 1
-%         [xstar, ustar, Jstar, exitflag ] = Extra.finite_control( P, Q, R, A, B, Ax, bx, Au, bu, Af, bf, N_predicition_horizon, x0, w);
-%         if exitflag ~= 1
-%             error('The problem is infeasible with the initial state!')
-%         end
-%     else
-%         [xstar, ustar, Jstar, exitflag ] = Extra.finite_control( P, Q, R, A, B, Ax, bx, Au, bu, Af, bf, N_predicition_horizon, x_oinf1(:,k), w);
-%     end
-%     
-%     if exitflag ~= 1
-%         mssg = ['Infeasible at time step ', num2str(k)];
-%         display(mssg)
-%         break
-%     end
-%     
-%     x_open(:,:,k) = xstar;
-%     ustar_new = ustar_seq(k) + K*(x_oinf1(:,k) - x_oinf(:,k));
-%     x_oinf1(:,k+1) = A*x_oinf1(:,k) + B*ustar_new(1) + unifrnd(-0.1, 0.1, 2,1,1);
-%     
-%     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '--o', 'LineWidth', 2, 'Color', 'g')
-%     plot(x_oinf1(1,1:k+1), x_oinf1(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
-%     tube = Extra.reduce_poly(S_hat_N + x_oinf(:,k));
-%     fill(tube.V(:, 1), tube.V(:, 2),  'r', 'FaceAlpha', 0.3);
-% %     plot(x_open(1,:,k), x_open(2,:,k), 'or--', 'LineWidth', 1.5)
-% 
-% end
 
 
 %% (e)
@@ -317,11 +265,3 @@ xlabel('x_1');
 ylabel('x_2'); 
 title("$\hat{S}_3$ plot with errors",'Interpreter','latex')
 
-
-% figure(9);
-% grid on; hold on;
-% % The plot of the polytope is with grey in order to show better the vectors
-% scatter(errors(1,:), errors(2,:), 'color', 'b');
-% xlabel('simulation times');
-% ylabel('x_2'); 
-% title("Errors",'Interpreter','latex')

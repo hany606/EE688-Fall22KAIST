@@ -14,12 +14,14 @@ A = [1.5431 1.1752; 1.1752 1.5431]; B = [0.5431 1.1752]';
 
 xmax = 1;
 X_poly = Polyhedron('lb', [-xmax;-xmax], 'ub', [xmax;xmax]);
+Ax = X_poly.A;
+bx = X_poly.b;
 U_poly = Polyhedron('lb', -0.5, 'ub', 0.5);
 
 % set C constraint Ac * x <= bc
 Ac = [1 1; -1 -1];
 bc = [0.4;0.4];
-C_poly = Polyhedron(Ac, bc);
+C_poly = Polyhedron([Ac; Ax], [bc; bx]);
 
 
 %% (a)
@@ -40,15 +42,15 @@ Pre_C = Pre_CU.projection([1 2]);
 A_pre = Pre_C.H(:,1:2);
 b_pre = Pre_C.H(:,3);
 
-BRS_C = Polyhedron([A_pre; A_om], [b_pre; b_om]); % intersection of the precursor and the original
+intersection = Polyhedron([A_pre; A_om], [b_pre; b_om]); % intersection of the precursor and the original
 
 
 figure(1);
 grid on; hold on;
-plot(C_poly, 'color', [0.7 0.7 0.7]);
 plot(Pre_C, 'color', 'r');
-plot(BRS_C, 'color', 'm'); % intersection between C and Pre(C)
-legend("C", "", "", "", "Pre(C)", "", "", "", "1-step BRS(C) = C $\cap$ Pre(C)",'Interpreter','latex');
+plot(C_poly, 'color', [0.7 0.7 0.7]);
+plot(intersection, 'color', 'm'); % intersection between C and Pre(C)
+legend("Pre(C)", "C", "$C \cap Pre(C)$",'Interpreter','latex');
 xlabel('x_1');
 ylabel('x_2'); 
 set(gca, 'fontsize', 12)
@@ -79,10 +81,6 @@ set_poly = C_poly;
 Omega = set_poly;
 A_om = Omega.A; 
 b_om = Omega.b;
-xmax = 1;
-X_poly = Polyhedron('lb', [-xmax;-xmax], 'ub', [xmax;xmax]);
-Ax = X_poly.A;
-bx = X_poly.b;
 Au = U_poly.A;
 bu = U_poly.b;
 
@@ -102,17 +100,17 @@ for i=1:N
     b_om = BRS_X.H(:,3);
 end
 
-plot(C_poly, 'color', [0.7 0.7 0.7]);
 plot(Pre_X, 'color', 'r');
 plot(BRS_X, 'color', 'm');
-% X_0 is not a subset of C, X_0 is a subset of Pre(C) and pre(C) is a
-% superset of C, hence, X_0 is not a superset of C
+plot(C_poly, 'color', [0.7 0.7 0.7]);
+
+% X_0 is a superset of C
 
 fprintf("Is X0 in C (C.contains(X0))? -> %d\n", C_poly.contains(BRS_X)); % 0
-fprintf("Is C in X0 (X0.contains(C))? -> %d\n", BRS_X.contains(C_poly)); % 0
+fprintf("Is C in X0 (X0.contains(C))? -> %d\n", BRS_X.contains(C_poly)); % 1
 fprintf("Is X0 in Pre(C) (Pre(C).contains(X0))? -> %d\n", Pre_X.contains(BRS_X)); % 1
 
-legend("X constraints", "C", "", "", "", "Pre(C)", "", "", "", "$X_0$",'Interpreter','latex');
+legend("$\mathcal{X}$ constraints", "Pre(C)",  "$X_0=K_1(C)=BRS_1(C)=Pre(C)\cap \mathcal{X}$", "C",'Interpreter','latex');
 %% (c)
 
 

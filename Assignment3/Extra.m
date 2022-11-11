@@ -1,7 +1,10 @@
-classdef Extra
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
-    
+% EE688: Optimal Control Theory
+% Fall 2022, KAIST
+% Author: Hany Hamed
+% Assignment 3
+% Extra codes for utilities
+
+classdef Extra    
     methods(Static)
         
         function reduced = reduce_poly(poly)
