@@ -224,13 +224,22 @@ for k=1:simulation_time
 end
 legend("Nominal trajectory", "Tube");%,'Interpreter','latex');
 
+figure('Name','Nominal input');
+grid on; hold on;
+xlabel('Siimulation time');
+ylabel('$\bar{u}$', 'Interpreter','latex'); 
+title("Nominal input",'Interpreter','latex')
+plot(ustar_seq, '-o', 'LineWidth', 2, 'Color', 'b');
+legend("Nominal input");
+
 
 %% (d) using the nominal trajectory from (c)
 simulation_time = 20;
 x_oinf1 = zeros(size(x0,1), simulation_time+1);
+ustar1_seq = zeros(1, simulation_time);
 errors = zeros(size(x0, 1), simulation_time+1);
 x_oinf1(:,1) = x0;
-figure(10);
+figure(11);
 grid on; hold on;
 xlabel('x_1');
 ylabel('x_2'); 
@@ -239,9 +248,10 @@ for k=1:simulation_time
     % Tube-based MPC using the nominal trajectory used from (c)
     % nominal trajcetory (No)
     ustar_new = ustar_seq(k) + K*(x_oinf1(:,k) - x_oinf(:,k));
+    ustar1_seq(k) = ustar_new;
     x_oinf1(:,k+1) = A*x_oinf1(:,k) + B*ustar_new(1) + unifrnd(-0.1, 0.1, 2,1,1);
     errors(:, k+1) = x_oinf1(:,k+1) - x_oinf(:,k+1);
-    figure(10)
+    figure(11)
 
     plot(x_oinf(1,1:k+1), x_oinf(2,1:k+1), '--o', 'LineWidth', 2, 'Color', 'g')
     plot(x_oinf1(1,1:k+1), x_oinf1(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'g')
@@ -252,6 +262,14 @@ for k=1:simulation_time
 end
 legend("Nominal trajectory", "Trajectory Tracking using Linear Feedback control", "Tube");%,'Interpreter','latex');
 
+figure('Name','Input');
+grid on; hold on;
+xlabel('Siimulation time');
+ylabel('$u$', 'Interpreter','latex'); 
+title("Input",'Interpreter','latex')
+plot(ustar_seq, '--o', 'LineWidth', 2, 'Color', 'b');
+plot(ustar1_seq, '-o', 'LineWidth', 2, 'Color', 'b');
+legend("Nominal input", "Input");
 
 %% (e)
 % close all;

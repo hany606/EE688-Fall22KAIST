@@ -3,7 +3,7 @@
 % Author: Hany Hamed
 % Assignment 3
 % Problem1: Receding Horizon Control
-% Code adapted from the lecture code
+% Code adapted from the lectures code
 
 clc;
 clear all;
@@ -56,20 +56,47 @@ ylabel('x_2');
 set(gca, 'fontsize', 12)
 fprintf("Is C in Pre(C) (Pre(C).contains(C))? -> %d\n", Pre_C.contains(C_poly)); % 1
 
+% Compute the maximal invariant set C_inf
+Omega = X_poly;
+A_om = Ax; 
+b_om = bx;
 
-% P1 = Polyhedron('A',[0,1;0,-1],'b',[1,1]);  % Unbounded
-% P2 = Polyhedron('A',[0,1;0,-1; -1,0],'b',[1,1,1]); % Bounded from the
-% left
-% P1.plot('color', 'r')
-% P2.plot('color', 'g')
-% P1.contains([-2;0]) % 1
-% P2.contains([-2;0]) % 0
+for i=1:100
+    % Precursor of X
+    Pre_XU = Polyhedron('A', [A_om * A, A_om * B ; zeros(2,2), Au], 'b', [b_om; bu]);
+    Pre_X = Pre_XU.projection([1 2]);
+
+    A_pre = Pre_X.H(:,1:2);
+    b_pre = Pre_X.H(:,3);
+
+    Omega_next = Polyhedron('A', [A_pre; A_om], 'b', [b_pre; b_om]);
+    
+    if Omega_next == Omega
+        disp('converged at')
+        disp(i);
+        break
+    end
+    
+    Omega = Omega_next;
+    A_om = Omega.H(:,1:2);
+    b_om = Omega.H(:,3);
+end
+Cinf = Omega;
+
+figure(2);
+grid on; hold on;
+plot(Cinf, 'color', 'r');
+plot(C_poly, 'color', [0.7 0.7 0.7]);
+legend("$C_\infty$", "C",'Interpreter','latex');
+xlabel('x_1');
+ylabel('x_2'); 
+set(gca, 'fontsize', 12)
 
 %% (b) N-step backward reachable set K_N(X_f=C); C is control invariant
 % close all;
 
 
-figure(2)
+figure(3)
 grid on; hold on;
 xlabel('x_1');
 ylabel('x_2'); 
@@ -114,7 +141,7 @@ legend("$\mathcal{X}$ constraints", "Pre(C)",  "$X_0=K_1(C)=BRS_1(C)=Pre(C)\cap 
 %% (c)
 
 
-% Compute the maximal invariant set C_inf
+% % Compute the maximal invariant set C_inf
 % Omega = X_poly;
 % A_om = Ax; 
 % b_om = bx;
@@ -149,7 +176,7 @@ F_infty = -inv(B'*P_infty*B+R)*B'*P_infty*A;
 
 A_auto = A + B * F_infty;
 
-figure(3)
+figure(4)
 grid on; hold on;
 xlabel('x_1');
 ylabel('x_2'); 
@@ -181,7 +208,6 @@ for i=1:100
     b_om = Omega.H(:,3);
 end
 
-Nbar = i;
 O_infty = Omega;
 % plot(Cinf, 'color', 'm')
 plot(O_infty, 'color', 'y')
@@ -196,7 +222,7 @@ x(:,1) = x0;
 Axf = O_infty.A;
 bxf = O_infty.b;
 
-figure(4)
+figure(5)
 grid on; hold on;
 xlabel('x_1');
 ylabel('x_2'); 
@@ -222,7 +248,7 @@ for k=1:simulation_time
     end
     x(:,k+1) = A*x(:,k) + B*ustar(1);
     
-    figure(4)
+    figure(5)
 
     plot(x(1,1:k+1), x(2,1:k+1), '-o', 'LineWidth', 2, 'Color', 'b')
 end
